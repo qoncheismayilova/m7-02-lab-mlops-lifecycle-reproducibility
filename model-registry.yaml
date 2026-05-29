@@ -1,0 +1,53 @@
+```yaml
+registry:
+  name: northstar-models
+
+  stages:
+    - name: staging
+      promoted_from: successful-training
+      promotion_rule: automatic
+
+      gates:
+        - "Validation MAE <= 4.5 minutes"
+        - "P95 inference latency <= 120 ms"
+        - "Model artifact scanned for vulnerabilities"
+        - "Lineage metadata complete"
+
+    - name: production
+      promoted_from: staging
+      promotion_rule: manual
+
+      gates:
+        - "Canary deployment error rate < 1%"
+        - "Per-city MAE <= 6 minutes for lowest 3 cities"
+        - "No schema mismatch detected"
+        - "7-day drift score < 0.15"
+
+      approvers:
+        - ML Team Lead
+        - Platform Engineer
+
+    - name: archived
+      promoted_from: production-replaced
+
+models:
+  - name: eta
+    owner: ml-platform-team
+    sla_p95_ms: 150
+    retention_versions: 10
+
+  - name: dispatcher-routing
+    owner: optimization-team
+    sla_p95_ms: 80
+    retention_versions: 10
+
+lineage:
+  required_fields:
+    - git_sha
+    - dataset_hash
+    - feature_pipeline_version
+    - training_config_version
+    - random_seed
+    - model_uri
+    - evaluation_dataset_version
+```
